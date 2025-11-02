@@ -18,6 +18,8 @@ This tool is for educational and authorized security testing purposes only. Unau
 - 🔄 **GitHub Integration**: Automatic updates from remote repository
 - 🧹 **Data Management**: Selective deletion of logs and captured data
 - ⚙️ **Centralized Configuration**: Easy customization via config.ini
+- 📥 **Data Extraction**: Extract and save visited websites, cookies, and credentials
+- 📺 **Live Logging**: Real-time logging in separate terminal window
 
 ## Hardware Compatibility
 
@@ -120,12 +122,13 @@ sudo ./main.sh
 5. **Project Setup**: Initialize or reconfigure the project
 6. **View Logs**: Access various log files with multiple viewing options
 7. **Delete Data**: Selectively remove logs, captures, or all data
-8. **Exit**: Safely terminate the application
+8. **Extract Data**: Extract visited websites, cookies, and credentials
+9. **Exit**: Safely terminate the application
 
 ### Advanced Features
 
 #### Log Viewing Options
-- View logs in terminal with pagination (10, 50, 100, or all entries)
+- View logs from top, bottom, or middle positions by specifying entry counts
 - Open log files directly in your preferred editor
 - Search functionality within logs
 - Support for all log types (software, hotspot, capture, cookies, credentials, URLs)
@@ -136,6 +139,12 @@ sudo ./main.sh
 - Delete specific log types (hotspot, software, capture)
 - Delete packet captures only
 - Delete extracted data (cookies, credentials, URLs)
+
+#### Data Extraction Options
+- Extract and list visited websites with saving option
+- Extract and list cookies in simplified JSON format with unique IDs
+- Extract and list credentials with unique IDs
+- Live logging in separate terminal window
 
 #### Software Update System
 - Automatic checking against GitHub repository
@@ -158,6 +167,11 @@ logs/
 
 pcap_logs/
 └── capture.pcap         # Full packet capture files
+
+extracted_data/
+├── visited_websites_*.txt  # Extracted websites
+├── cookies_*.json         # Extracted cookies in JSON
+└── credentials_*.txt      # Extracted credentials
 ```
 
 ## Security Considerations
@@ -191,22 +205,18 @@ systemctl status hostapd dnsmasq
 tail -f logs/hotspot.log
 ```
 
-## Contributing
+## Author
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a pull request
+**Rishu Burnwal**
+- Instagram: [@rishu.burnwal](https://instagram.com/rishu.burnwal)
+- LinkedIn: [linkedin.com/in/rishuburnwal](https://linkedin.com/in/rishuburnwal)
+- Twitter: [@rishuburnwal](https://twitter.com/rishuburnwal)
+- Email: [rishukumarburnwal9525@gmail.com](mailto:rishukumarburnwal9525@gmail.com)
 
 ## License
 
-This project is for educational purposes only. The authors are not responsible for any misuse of this tool. Always ensure you have proper authorization before conducting any network testing.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## Contributing
 
-- Thanks to the aircrack-ng team for RTL8812AU driver
-- Inspired by various network security research projects
-- Built for educational cybersecurity purposes
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to this project.
