@@ -299,7 +299,8 @@ show_main_menu() {
     echo -e "5. Project Setup"
     echo -e "6. View Logs"
     echo -e "7. Delete Data"
-    echo -e "8. Exit"
+    echo -e "8. Extract Data"
+    echo -e "9. Exit"
     echo -e "${GREEN}==========================================${NC}"
 }
 
@@ -349,7 +350,20 @@ show_delete_menu() {
     echo -e "${GREEN}==========================================${NC}"
 }
 
-# Function to view logs in terminal with pagination options
+# Function to display data extraction menu
+show_extraction_menu() {
+    echo -e "\n${GREEN}==========================================${NC}"
+    echo -e "${GREEN}Data Extraction Options${NC}"
+    echo -e "${GREEN}==========================================${NC}"
+    echo -e "1. Extract and List Visited Websites"
+    echo -e "2. Extract and List Cookies"
+    echo -e "3. Extract and List Credentials"
+    echo -e "4. Live Logging in New Terminal"
+    echo -e "5. Back to Main Menu"
+    echo -e "${GREEN}==========================================${NC}"
+}
+
+# Function to view logs in terminal with custom range options
 view_logs_terminal() {
     local log_file=$1
     local log_name=$2
@@ -368,45 +382,60 @@ view_logs_terminal() {
     local total_lines=$(wc -l < "$log_file")
     echo -e "${YELLOW}Total entries: $total_lines${NC}"
     
-    # Ask user how many lines to show
+    # Ask user how they want to view the logs
     echo -e "\nOptions:"
-    echo -e "1. Show last 10 entries"
-    echo -e "2. Show last 50 entries"
-    echo -e "3. Show last 100 entries"
-    echo -e "4. Show all entries"
-    echo -e "5. Search in logs"
-    echo -e "6. Back"
+    echo -e "1. View from top (first N entries)"
+    echo -e "2. View from bottom (last N entries)"
+    echo -e "3. View from middle (N entries starting from position)"
+    echo -e "4. Search in logs"
+    echo -e "5. Back"
     
     while true; do
-        read -p "Select option (1-6): " log_choice
+        read -p "Select option (1-5): " log_choice
         case $log_choice in
             1)
-                echo -e "\n${YELLOW}Last 10 entries:${NC}"
-                tail -n 10 "$log_file" | nl -w 4
+                read -p "Enter number of entries from top: " num_entries
+                if [[ "$num_entries" =~ ^[0-9]+$ ]] && [ "$num_entries" -gt 0 ]; then
+                    echo -e "\n${YELLOW}First $num_entries entries:${NC}"
+                    head -n "$num_entries" "$log_file" | nl -w 4
+                else
+                    echo -e "${RED}Invalid number. Please enter a positive integer.${NC}"
+                fi
                 break
                 ;;
             2)
-                echo -e "\n${YELLOW}Last 50 entries:${NC}"
-                tail -n 50 "$log_file" | nl -w 4
+                read -p "Enter number of entries from bottom: " num_entries
+                if [[ "$num_entries" =~ ^[0-9]+$ ]] && [ "$num_entries" -gt 0 ]; then
+                    echo -e "\n${YELLOW}Last $num_entries entries:${NC}"
+                    tail -n "$num_entries" "$log_file" | nl -w 4
+                else
+                    echo -e "${RED}Invalid number. Please enter a positive integer.${NC}"
+                fi
                 break
                 ;;
             3)
-                echo -e "\n${YELLOW}Last 100 entries:${NC}"
-                tail -n 100 "$log_file" | nl -w 4
+                read -p "Enter starting position: " start_pos
+                read -p "Enter number of entries: " num_entries
+                if [[ "$start_pos" =~ ^[0-9]+$ ]] && [[ "$num_entries" =~ ^[0-9]+$ ]] && 
+                   [ "$start_pos" -gt 0 ] && [ "$num_entries" -gt 0 ]; then
+                    echo -e "\n${YELLOW}$num_entries entries starting from position $start_pos:${NC}"
+                    sed -n "${start_pos},$((start_pos + num_entries - 1))p" "$log_file" | nl -w 4 -v"$start_pos"
+                else
+                    echo -e "${RED}Invalid input. Please enter positive integers.${NC}"
+                fi
                 break
                 ;;
             4)
-                echo -e "\n${YELLOW}All entries:${NC}"
-                cat "$log_file" | nl -w 4
+                read -p "Enter search term: " search_term
+                if [ -n "$search_term" ]; then
+                    echo -e "\n${YELLOW}Search results for '$search_term':${NC}"
+                    grep -i "$search_term" "$log_file" | nl -w 4
+                else
+                    echo -e "${RED}Search term cannot be empty.${NC}"
+                fi
                 break
                 ;;
             5)
-                read -p "Enter search term: " search_term
-                echo -e "\n${YELLOW}Search results for '$search_term':${NC}"
-                grep -i "$search_term" "$log_file" | nl -w 4
-                break
-                ;;
-            6)
                 return 0
                 ;;
             *)
@@ -951,6 +980,230 @@ start_hotspot_current_terminal() {
     bash hotspot.sh "$wifi_iface"
 }
 
+# Function to extract and list visited websites
+extract_websites() {
+    local pcap_file="pcap_logs/capture.pcap"
+    
+    if [ ! -f "$pcap_file" ]; then
+        echo -e "\n${RED}Packet capture file not found: $pcap_file${NC}"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    echo -e "\n${YELLOW}Extracting visited websites from packet capture...${NC}"
+    
+    # Ask user if they want to save to file
+    read -p "Do you want to save extracted websites to a file? [y/N]: " save_choice
+    local save_to_file=false
+    local output_file=""
+    
+    if [[ "$save_choice" =~ ^[Yy]$ ]]; then
+        save_to_file=true
+        mkdir -p "extracted_data"
+        output_file="extracted_data/visited_websites_$(date +%Y%m%d_%H%M%S).txt"
+        echo -e "\n${YELLOW}Websites will be saved to: $output_file${NC}"
+    fi
+    
+    # Extract URLs using tshark if available, otherwise use basic method
+    if command -v tshark >/dev/null 2>&1; then
+        echo -e "\n${YELLOW}Extracting with tshark...${NC}"
+        if [ "$save_to_file" = true ]; then
+            tshark -r "$pcap_file" -Y "http.request" -T fields -e http.host -e http.request.uri 2>/dev/null | \
+            while read host uri; do
+                if [ -n "$host" ]; then
+                    echo "http://$host$uri"
+                fi
+            done | sort -u > "$output_file"
+            
+            echo -e "\n${GREEN}Visited websites saved to $output_file${NC}"
+            echo -e "\n${YELLOW}First 10 websites:${NC}"
+            head -n 10 "$output_file" | nl -w 4
+        else
+            tshark -r "$pcap_file" -Y "http.request" -T fields -e http.host -e http.request.uri 2>/dev/null | \
+            while read host uri; do
+                if [ -n "$host" ]; then
+                    echo "http://$host$uri"
+                fi
+            done | sort -u | head -n 20 | nl -w 4
+        fi
+    else
+        # Fallback method using tcpdump and grep
+        echo -e "\n${YELLOW}Extracting with grep (tshark not available)...${NC}"
+        if [ "$save_to_file" = true ]; then
+            strings "$pcap_file" | grep -E "GET|POST|Host:" | grep -oE "Host: [^ ]+" | cut -d' ' -f2 | \
+            sort -u > "$output_file"
+            
+            echo -e "\n${GREEN}Visited websites saved to $output_file${NC}"
+            echo -e "\n${YELLOW}First 10 websites:${NC}"
+            head -n 10 "$output_file" | nl -w 4
+        else
+            strings "$pcap_file" | grep -E "GET|POST|Host:" | grep -oE "Host: [^ ]+" | cut -d' ' -f2 | \
+            sort -u | head -n 20 | nl -w 4
+        fi
+    fi
+    
+    echo -e "\n${GREEN}==========================================${NC}"
+    read -p "Press Enter to continue..."
+}
+
+# Function to extract and list cookies with simplified JSON view
+extract_cookies() {
+    local cookies_file="logs/cookies.txt"
+    
+    if [ ! -f "$cookies_file" ] || [ ! -s "$cookies_file" ]; then
+        echo -e "\n${RED}Cookies file not found or is empty: $cookies_file${NC}"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    echo -e "\n${YELLOW}Extracting cookies...${NC}"
+    
+    # Ask user if they want to save to file
+    read -p "Do you want to save extracted cookies to a JSON file? [y/N]: " save_choice
+    local save_to_file=false
+    local output_file=""
+    
+    if [[ "$save_choice" =~ ^[Yy]$ ]]; then
+        save_to_file=true
+        mkdir -p "extracted_data"
+        output_file="extracted_data/cookies_$(date +%Y%m%d_%H%M%S).json"
+        echo -e "\n${YELLOW}Cookies will be saved to: $output_file${NC}"
+    fi
+    
+    # Process cookies and convert to simplified JSON format
+    local count=0
+    local json_content="{\n  \"cookies\": [\n"
+    
+    while IFS= read -r line; do
+        if [ -n "$line" ]; then
+            # Generate unique ID
+            local id=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 8 | head -n 1)
+            
+            # Extract domain from cookie (simplified approach)
+            local domain="unknown"
+            if [[ $line =~ ([^=]+)=([^;]*) ]]; then
+                domain="extracted"
+            fi
+            
+            # Create simplified JSON entry
+            local json_entry="    {\n      \"id\": \"$id\",\n      \"domain\": \"$domain\",\n      \"content\": \"$line\"\n    }"
+            
+            if [ $count -gt 0 ]; then
+                json_content="$json_content,\n$json_entry"
+            else
+                json_content="$json_content$json_entry"
+            fi
+            
+            count=$((count + 1))
+        fi
+    done < "$cookies_file"
+    
+    json_content="$json_content\n  ]\n}"
+    
+    if [ "$save_to_file" = true ]; then
+        echo -e "$json_content" > "$output_file"
+        echo -e "\n${GREEN}Cookies saved to $output_file${NC}"
+        echo -e "\n${YELLOW}First 5 cookies:${NC}"
+        head -n 15 "$output_file" | sed 's/^/    /'
+    else
+        echo -e "\n${YELLOW}First 5 cookies (simplified JSON view):${NC}"
+        echo -e "$json_content" | head -n 20 | sed 's/^/    /'
+    fi
+    
+    echo -e "\n${GREEN}Total cookies extracted: $count${NC}"
+    echo -e "\n${GREEN}==========================================${NC}"
+    read -p "Press Enter to continue..."
+}
+
+# Function to extract and list credentials with simplified view
+extract_credentials() {
+    local credentials_file="logs/credentials.txt"
+    
+    if [ ! -f "$credentials_file" ] || [ ! -s "$credentials_file" ]; then
+        echo -e "\n${RED}Credentials file not found or is empty: $credentials_file${NC}"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    echo -e "\n${YELLOW}Extracting credentials...${NC}"
+    
+    # Ask user if they want to save to file
+    read -p "Do you want to save extracted credentials to a file? [y/N]: " save_choice
+    local save_to_file=false
+    local output_file=""
+    
+    if [[ "$save_choice" =~ ^[Yy]$ ]]; then
+        save_to_file=true
+        mkdir -p "extracted_data"
+        output_file="extracted_data/credentials_$(date +%Y%m%d_%H%M%S).txt"
+        echo -e "\n${YELLOW}Credentials will be saved to: $output_file${NC}"
+    fi
+    
+    # Process credentials and create simplified view
+    local count=0
+    
+    if [ "$save_to_file" = true ]; then
+        while IFS= read -r line; do
+            if [ -n "$line" ]; then
+                # Generate unique ID
+                local id=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 8 | head -n 1)
+                
+                # Write to file with ID
+                echo "ID: $id | Data: $line" >> "$output_file"
+                count=$((count + 1))
+            fi
+        done < "$credentials_file"
+        
+        echo -e "\n${GREEN}Credentials saved to $output_file${NC}"
+        echo -e "\n${YELLOW}First 5 credentials:${NC}"
+        head -n 5 "$output_file" | nl -w 4
+    else
+        while IFS= read -r line; do
+            if [ -n "$line" ]; then
+                # Generate unique ID
+                local id=$(cat /dev/urandom | tr -dc 'A-Za-z0-9' | fold -w 8 | head -n 1)
+                
+                # Display with ID
+                echo "$((count + 1)). ID: $id | Data: $line"
+                count=$((count + 1))
+                
+                # Limit display to first 10 credentials
+                if [ $count -ge 10 ]; then
+                    break
+                fi
+            fi
+        done < "$credentials_file"
+    fi
+    
+    echo -e "\n${GREEN}Total credentials extracted: $count${NC}"
+    echo -e "\n${GREEN}==========================================${NC}"
+    read -p "Press Enter to continue..."
+}
+
+# Function to open live logging in new terminal
+open_live_logging() {
+    echo -e "\n${YELLOW}Opening live logging in new terminal...${NC}"
+    
+    # Try different terminal emulators
+    if command -v gnome-terminal >/dev/null 2>&1; then
+        gnome-terminal --title="Live Logging" -- bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null || \
+        gnome-terminal -e "bash -c \"echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash\"" 2>/dev/null
+    elif command -v xterm >/dev/null 2>&1; then
+        xterm -title "Live Logging" -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+    elif command -v konsole >/dev/null 2>&1; then
+        konsole --title "Live Logging" -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+    else
+        echo -e "\n${RED}No supported terminal emulator found!${NC}"
+        echo -e "${YELLOW}Supported terminals: gnome-terminal, xterm, konsole${NC}"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    echo -e "\n${GREEN}Live logging terminal opened successfully!${NC}"
+    echo -e "${YELLOW}Check the new terminal window for live logs.${NC}"
+    read -p "Press Enter to continue..."
+}
+
 # Function to delete all data
 delete_all_data() {
     echo -e "\n${RED}WARNING: This will permanently delete all data!${NC}"
@@ -1272,6 +1525,34 @@ delete_data() {
     done
 }
 
+# Function to handle data extraction
+extract_data() {
+    while true; do
+        show_extraction_menu
+        read -p "Select option (1-5): " extract_choice
+        case $extract_choice in
+            1)
+                extract_websites
+                ;;
+            2)
+                extract_cookies
+                ;;
+            3)
+                extract_credentials
+                ;;
+            4)
+                open_live_logging
+                ;;
+            5)
+                return 0
+                ;;
+            *)
+                echo -e "${RED}Invalid selection. Please try again.${NC}"
+                ;;
+        esac
+    done
+}
+
 # Main menu function
 main_menu() {
     # Log software execution
@@ -1279,7 +1560,7 @@ main_menu() {
     
     while true; do
         show_main_menu
-        read -p "Select option (1-8): " choice
+        read -p "Select option (1-9): " choice
         case $choice in
             1)
                 select_wifi_adapter
@@ -1309,6 +1590,9 @@ main_menu() {
                 delete_data
                 ;;
             8)
+                extract_data
+                ;;
+            9)
                 software_log "SOFTWARE_EXIT" "WiFi Hotspot and Activity Logger exited"
                 echo -e "\n${GREEN}Goodbye!${NC}"
                 exit 0
