@@ -1016,11 +1016,11 @@ start_hotspot_with_separate_terminals() {
     
     # Start hotspot in a new terminal
     echo -e "\n${GREEN}Starting hotspot on $wifi_iface...${NC}"
-    gnome-terminal --title="Hotspot - $wifi_iface" -- bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    xterm -title "Hotspot - $wifi_iface" -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    konsole --title "Hotspot - $wifi_iface" -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    qterminal -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    x-terminal-emulator -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    gnome-terminal --title="Hotspot - $wifi_iface" -- bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    xterm -title "Hotspot - $wifi_iface" -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    konsole --title "Hotspot - $wifi_iface" -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    qterminal -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    x-terminal-emulator -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
     echo -e "${RED}Could not open terminal for hotspot. Please install gnome-terminal, xterm, or qterminal.${NC}"
     
     # Wait a moment for hotspot to start
@@ -1028,11 +1028,11 @@ start_hotspot_with_separate_terminals() {
     
     # Start packet capture in a new terminal
     echo -e "\n${GREEN}Starting packet capture on $wifi_iface...${NC}"
-    gnome-terminal --title="Packet Capture - $wifi_iface" -- bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    xterm -title "Packet Capture - $wifi_iface" -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    konsole --title "Packet Capture - $wifi_iface" -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    qterminal -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-    x-terminal-emulator -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    gnome-terminal --title="Packet Capture - $wifi_iface" -- bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    xterm -title "Packet Capture - $wifi_iface" -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    konsole --title "Packet Capture - $wifi_iface" -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    qterminal -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
+    x-terminal-emulator -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
     echo -e "${RED}Could not open terminal for packet capture. Please install gnome-terminal, xterm, or qterminal.${NC}"
     
     # Start log monitoring in a new terminal
@@ -1075,7 +1075,7 @@ start_hotspot_background() {
     # Start hotspot in the background
     log "INFO" "Starting hotspot on $wifi_iface"
     mkdir -p logs
-    bash hotspot.sh "$wifi_iface" > logs/hotspot.log 2>&1 &
+    ./hotspot.sh "$wifi_iface" > logs/hotspot.log 2>&1 &
     HOTSPOT_PID=$!
     
     # Give the hotspot a moment to start
@@ -1130,7 +1130,7 @@ start_hotspot_background() {
     # Start packet capture in the background
     log "INFO" "Starting packet capture on $wifi_iface"
     mkdir -p pcap_logs
-    bash capture.sh "$wifi_iface" > logs/capture.log 2>&1 &
+    ./capture.sh "$wifi_iface" > logs/capture.log 2>&1 &
     CAPTURE_PID=$!
     
     # Verify capture is running
