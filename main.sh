@@ -1086,7 +1086,11 @@ start_hotspot_background() {
     if ! ps -p $HOTSPOT_PID > /dev/null; then
         log "ERROR" "Failed to start hotspot. Check logs/hotspot.log for details."
         echo -e "\n${RED}Failed to start hotspot. Check logs/hotspot.log for details.${NC}"
-        return 1
+        # Kill any remaining processes
+        kill $HOTSPOT_PID 2>/dev/null
+        echo -e "${YELLOW}Press Enter to return to main menu...${NC}"
+        read
+        return
     fi
     
     # Extract hotspot credentials from config or use defaults
@@ -1118,8 +1122,6 @@ start_hotspot_background() {
     echo -e "${GREEN}WiFi Hotspot is now running!${NC}"
     echo -e "${GREEN}==========================================${NC}"
     echo -e "SSID:     ${YELLOW}$SSID${NC}"
-}
-
     echo -e "Password: ${YELLOW}$PASSWORD${NC}"
     echo -e "${GREEN}==========================================${NC}"
     echo -e "Connect your devices to the hotspot now."
@@ -1137,7 +1139,9 @@ start_hotspot_background() {
         log "ERROR" "Failed to start packet capture. Check logs/capture.log for details."
         echo -e "\n${RED}Failed to start packet capture. Check logs/capture.log for details.${NC}"
         kill $HOTSPOT_PID 2>/dev/null
-        return 1
+        echo -e "${YELLOW}Press Enter to return to main menu...${NC}"
+        read
+        return
     fi
     
     echo -e "\n${GREEN}Hotspot is running in background. Check logs for details.${NC}"
@@ -1496,16 +1500,6 @@ delete_hotspot_logs() {
     read -p "Press Enter to continue..."
 }
 
-# Function to delete software logs
-delete_software_logs() {
-    echo -e "\n${RED}WARNING: This will permanently delete software logs!${NC}"
-    
-    read -p "Are you sure you want to delete software logs? [y/N]: " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        software_log "LOG_DELETE" "Deleting software logs initiated by user"
-        
-        # Delete software log file
-}
 
 # Function to start hotspot with separate terminals
 start_hotspot_with_separate_terminals() {
@@ -1605,14 +1599,6 @@ start_hotspot_with_separate_terminals() {
     read -p "Press Enter to return to main menu..."
 }
 
-    else
-        echo -e "\n${RED}Could not open terminal for URL monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
-    fi
-    
-    echo -e "\n${GREEN}All components started in separate terminals!${NC}"
-    read -p "Press Enter to return to main menu..."
-}
-
 # Function to start all components in separate terminals
 start_components_in_terminals() {
     local iface=$1
@@ -1703,6 +1689,15 @@ start_components_in_terminals() {
     read -p "Press Enter to return to main menu..."
 }
 
+# Function to delete software logs
+delete_software_logs() {
+    echo -e "\n${RED}WARNING: This will permanently delete software logs!${NC}"
+    
+    read -p "Are you sure you want to delete software logs? [y/N]: " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        software_log "LOG_DELETE" "Deleting software logs initiated by user"
+        
+        # Delete software log file
         if [ -f "logs/software.log" ]; then
             echo -e "\n${YELLOW}Deleting software log file...${NC}"
             rm -f logs/software.log
@@ -1712,8 +1707,10 @@ start_components_in_terminals() {
         
         # Recreate software log file
         touch logs/software.log 2>/dev/null
-        echo "# Software Log - WiFi Hotspot and Activity Logger" > logs/software.log
-        echo "# Format: [TIMESTAMP] [LOG_ID] [LEVEL] [ACTION] [DETAILS]" >> logs/software.log
+        echo -e "# Software Log - WiFi Hotspot and Activity Logger" > logs/software.log
+        echo -e "# Format: [TIMESTAMP] [LOG_ID] [LEVEL] [ACTION] [DETAILS]" >> logs/software.log
+        echo -e "# Generated on: $(date)" >> logs/software.log
+        echo -e "" >> logs/software.log
         
         echo -e "\n${GREEN}Software logs have been deleted successfully!${NC}"
         software_log "LOG_DELETE" "Software logs deletion completed successfully"
