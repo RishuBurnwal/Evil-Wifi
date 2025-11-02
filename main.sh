@@ -1369,16 +1369,15 @@ open_live_logging() {
     
     # Try different terminal emulators
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Live Logging" -- bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Live Logging" -- bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Live Logging" -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        xterm -title "Live Logging" -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Live Logging" -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        konsole --title "Live Logging" -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Live Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     else
         echo -e "\n${RED}No supported terminal emulator found!${NC}"
         echo -e "${YELLOW}Supported terminals: gnome-terminal, xterm, konsole, qterminal${NC}"
@@ -1502,6 +1501,7 @@ delete_hotspot_logs() {
 
 
 # Function to start hotspot with separate terminals
+# Function to start hotspot with separate terminals
 start_hotspot_with_separate_terminals() {
     local wifi_iface=$1
     
@@ -1510,18 +1510,17 @@ start_hotspot_with_separate_terminals() {
     # Start hotspot in a new terminal
     echo -e "\n${GREEN}Starting hotspot on $wifi_iface...${NC}"
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Hotspot - $wifi_iface" -- bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"bash hotspot.sh '$wifi_iface'; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Hotspot - $wifi_iface" -- bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Hotspot - $wifi_iface" -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null
+        xterm -title "Hotspot - $wifi_iface" -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Hotspot - $wifi_iface" -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null
+        konsole --title "Hotspot - $wifi_iface" -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null
+        qterminal -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "bash hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "./hotspot.sh '$wifi_iface'; exec bash" 2>/dev/null &
     else
-        echo -e "\n${RED}Could not open terminal for hotspot. Please install gnome-terminal, xterm, or qterminal.${NC}"
+        echo -e "${RED}Could not open terminal for hotspot. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Wait a moment for hotspot to start
@@ -1530,69 +1529,65 @@ start_hotspot_with_separate_terminals() {
     # Start packet capture in a new terminal
     echo -e "\n${GREEN}Starting packet capture on $wifi_iface...${NC}"
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Packet Capture - $wifi_iface" -- bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"bash capture.sh '$wifi_iface'; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Packet Capture - $wifi_iface" -- bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Packet Capture - $wifi_iface" -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null
+        xterm -title "Packet Capture - $wifi_iface" -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Packet Capture - $wifi_iface" -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null
+        konsole --title "Packet Capture - $wifi_iface" -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null
+        qterminal -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "bash capture.sh '$wifi_iface'; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "./capture.sh '$wifi_iface'; exec bash" 2>/dev/null &
     else
-        echo -e "\n${RED}Could not open terminal for packet capture. Please install gnome-terminal, xterm, or qterminal.${NC}"
+        echo -e "${RED}Could not open terminal for packet capture. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start log monitoring in a new terminal
     echo -e "\n${GREEN}Starting log monitoring...${NC}"
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Hotspot Logs" -- bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Hotspot Logs" -- bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Hotspot Logs" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        xterm -title "Hotspot Logs" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Hotspot Logs" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        konsole --title "Hotspot Logs" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     else
-        echo -e "\n${RED}Could not open terminal for log monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
+        echo -e "${RED}Could not open terminal for log monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start cookie monitoring in a new terminal
     echo -e "\n${GREEN}Starting cookie monitoring...${NC}"
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Cookies" -- bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Cookies" -- bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Cookies" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        xterm -title "Cookies" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Cookies" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        konsole --title "Cookies" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     else
-        echo -e "\n${RED}Could not open terminal for cookie monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
+        echo -e "${RED}Could not open terminal for cookie monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start visited URLs monitoring in a new terminal
     echo -e "\n${GREEN}Starting visited URLs monitoring...${NC}"
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Visited URLs" -- bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Visited URLs" -- bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Visited URLs" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        xterm -title "Visited URLs" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Visited URLs" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        konsole --title "Visited URLs" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     else
-        echo -e "\n${RED}Could not open terminal for URL monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
+        echo -e "${RED}Could not open terminal for URL monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     echo -e "\n${GREEN}All components started in separate terminals!${NC}"
@@ -1607,80 +1602,75 @@ start_components_in_terminals() {
     
     # Start hotspot in separate terminal
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="WiFi Hotspot - $iface" -- bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"./hotspot.sh $iface; exec bash\"" 2>/dev/null
+        gnome-terminal --title="WiFi Hotspot - $iface" -- bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "WiFi Hotspot - $iface" -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null
+        xterm -title "WiFi Hotspot - $iface" -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "WiFi Hotspot - $iface" -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null
+        konsole --title "WiFi Hotspot - $iface" -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null
+        qterminal -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "./hotspot.sh $iface; exec bash" 2>/dev/null &
     else
         echo -e "\n${RED}Could not open terminal for hotspot. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start packet capture in separate terminal
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Packet Capture - $iface" -- bash -c "./capture.sh $iface; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"./capture.sh $iface; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Packet Capture - $iface" -- bash -c "./capture.sh $iface; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Packet Capture - $iface" -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null
+        xterm -title "Packet Capture - $iface" -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Packet Capture - $iface" -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null
+        konsole --title "Packet Capture - $iface" -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null
+        qterminal -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "./capture.sh $iface; exec bash" 2>/dev/null &
     else
         echo -e "\n${RED}Could not open terminal for packet capture. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start log monitoring in separate terminal
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Log Monitoring" -- bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Log Monitoring" -- bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Log Monitoring" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        xterm -title "Log Monitoring" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Log Monitoring" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        konsole --title "Log Monitoring" -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Hotspot Logs:'; tail -f logs/hotspot.log; exec bash" 2>/dev/null &
     else
         echo -e "\n${RED}Could not open terminal for log monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start cookie monitoring in separate terminal
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Cookie Monitoring" -- bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Cookie Monitoring" -- bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Cookie Monitoring" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        xterm -title "Cookie Monitoring" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Cookie Monitoring" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        konsole --title "Cookie Monitoring" -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Cookies Log:'; tail -f logs/cookies.txt; exec bash" 2>/dev/null &
     else
         echo -e "\n${RED}Could not open terminal for cookie monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
     
     # Start visited URLs monitoring in separate terminal
     if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="Visited URLs Monitoring" -- bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null || \
-        gnome-terminal -e "bash -c \"echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash\"" 2>/dev/null
+        gnome-terminal --title="Visited URLs Monitoring" -- bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "Visited URLs Monitoring" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        xterm -title "Visited URLs Monitoring" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "Visited URLs Monitoring" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        konsole --title "Visited URLs Monitoring" -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v qterminal >/dev/null 2>&1; then
-        qterminal -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        qterminal -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     elif command -v x-terminal-emulator >/dev/null 2>&1; then
-        x-terminal-emulator -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null
+        x-terminal-emulator -e bash -c "echo 'Visited URLs Log:'; tail -f logs/urls.txt; exec bash" 2>/dev/null &
     else
         echo -e "\n${RED}Could not open terminal for URL monitoring. Please install gnome-terminal, xterm, or qterminal.${NC}"
     fi
