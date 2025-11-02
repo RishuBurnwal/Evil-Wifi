@@ -542,6 +542,10 @@ update_software() {
                 echo -e "\n${GREEN}Software is up to date!${NC}"
                 log "INFO" "Software is up to date"
                 software_log "UPDATE_CHECK" "Software is up to date. Local: $LOCAL"
+                
+                # Even if up to date, verify all files exist and are correct
+                echo -e "\n${YELLOW}Verifying file integrity...${NC}"
+                verify_file_integrity
             else
                 echo -e "\n${YELLOW}Updates available!${NC}"
                 echo -e "${YELLOW}Local commit: $LOCAL${NC}"
@@ -578,6 +582,10 @@ update_software() {
                         # Make sure all scripts are executable
                         chmod +x *.sh 2>/dev/null || true
                         
+                        # Verify all files after update
+                        echo -e "\n${YELLOW}Verifying file integrity after update...${NC}"
+                        verify_file_integrity
+                        
                         # Restart the script to use the updated version
                         echo -e "\n${YELLOW}Restarting script with updated version...${NC}"
                         software_log "SOFTWARE_RESTART" "Restarting script with updated version"
@@ -602,19 +610,144 @@ update_software() {
             software_log "UPDATE_ERROR" "Failed to fetch updates from GitHub"
         fi
     else
-        # If not a git repository, check the remote URL directly
-        echo -e "\n${YELLOW}Checking for updates from remote repository: $GITHUB_REPO_URL${NC}"
-        software_log "UPDATE_CHECK" "Checking for updates from remote repository: $GITHUB_REPO_URL"
-        
-        # This is a simplified check - in a real implementation, you would check the remote repository
-        # For demo purposes, we'll just show how it would work
-        echo -e "\n${YELLOW}This is a demo implementation. In a real scenario, this would check the remote repository for updates.${NC}"
-        echo -e "${YELLOW}To enable full GitHub integration, please clone the repository from:${NC}"
-        echo -e "${YELLOW}$GITHUB_REPO_URL${NC}"
-        software_log "UPDATE_INFO" "Demo mode: Please clone from $GITHUB_REPO_URL for full GitHub integration"
+        echo -e "\n${RED}Not a git repository or git not available!${NC}"
+        log "ERROR" "Not a git repository or git not available"
+        software_log "UPDATE_ERROR" "Not a git repository or git not available"
     fi
     
     read -p "Press Enter to continue..."
+}
+
+# Function to verify file integrity and download missing files
+verify_file_integrity() {
+    echo -e "\n${YELLOW}Starting file integrity verification...${NC}"
+    software_log "FILE_VERIFY" "Starting file integrity verification"
+    
+    # List of required files
+    local required_files=(
+        "main.sh"
+        "hotspot.sh"
+        "capture.sh"
+        "logger.sh"
+        "cookie_extractor.py"
+        "setup_hotspot.sh"
+        "check_dependencies.sh"
+        "install_deps.sh"
+        "test_wifi.sh"
+        "config.ini"
+        "config.conf"
+        "README.md"
+        "LICENSE"
+        "CONTRIBUTING.md"
+        "Makefile"
+    )
+    
+    local missing_files=()
+    local corrupted_files=()
+    
+    # Check each required file
+    for file in "${required_files[@]}"; do
+        if [ ! -f "$file" ]; then
+            echo -e "${RED}Missing file: $file${NC}"
+            missing_files+=("$file")
+        else
+            # For script files, check if they're executable
+            if [[ "$file" == *.sh ]]; then
+                if [ ! -x "$file" ]; then
+                    echo -e "${YELLOW}Fixing permissions for: $file${NC}"
+                    chmod +x "$file" 2>/dev/null || echo -e "${RED}Failed to make $file executable${NC}"
+                fi
+            fi
+            echo -e "${GREEN}Verified: $file${NC}"
+        fi
+    done
+    
+    # Check log directories
+    local required_dirs=(
+        "logs"
+        "pcap_logs"
+        "extracted_data"
+    )
+    
+    for dir in "${required_dirs[@]}"; do
+        if [ ! -d "$dir" ]; then
+            echo -e "${YELLOW}Creating missing directory: $dir${NC}"
+            mkdir -p "$dir" 2>/dev/null || echo -e "${RED}Failed to create directory: $dir${NC}"
+        else
+            echo -e "${GREEN}Verified directory: $dir${NC}"
+        fi
+    done
+    
+    # Check for log files and create if missing
+    local required_log_files=(
+        "logs/hotspot.log"
+        "logs/software.log"
+        "logs/capture.log"
+        "logs/cookies.txt"
+        "logs/credentials.txt"
+        "logs/urls.txt"
+    )
+    
+    for log_file in "${required_log_files[@]}"; do
+        if [ ! -f "$log_file" ]; then
+            echo -e "${YELLOW}Creating missing log file: $log_file${NC}"
+            mkdir -p "$(dirname "$log_file")" 2>/dev/null
+            touch "$log_file" 2>/dev/null || echo -e "${RED}Failed to create log file: $log_file${NC}"
+        else
+            echo -e "${GREEN}Verified log file: $log_file${NC}"
+        fi
+    done
+    
+    # Report results
+    if [ ${#missing_files[@]} -eq 0 ] && [ ${#corrupted_files[@]} -eq 0 ]; then
+        echo -e "\n${GREEN}All required files are present and verified!${NC}"
+        software_log "FILE_VERIFY" "All required files are present and verified"
+    else
+        echo -e "\n${YELLOW}Issues found during verification:${NC}"
+        if [ ${#missing_files[@]} -gt 0 ]; then
+            echo -e "${RED}Missing files: ${#missing_files[@]}${NC}"
+            for file in "${missing_files[@]}"; do
+                echo -e "  - $file"
+            done
+        fi
+        
+        if [ ${#corrupted_files[@]} -gt 0 ]; then
+            echo -e "${RED}Corrupted files: ${#corrupted_files[@]}${NC}"
+            for file in "${corrupted_files[@]}"; do
+                echo -e "  - $file"
+            done
+        fi
+        
+        # Ask user if they want to attempt to restore missing files
+        if [ ${#missing_files[@]} -gt 0 ]; then
+            echo -e "\n${YELLOW}Do you want to attempt to restore missing files from GitHub? [y/N]${NC}"
+            read -p "Select option: " restore_choice
+            
+            if [[ "$restore_choice" =~ ^[Yy]$ ]]; then
+                echo -e "\n${YELLOW}Attempting to restore missing files...${NC}"
+                software_log "FILE_RESTORE" "Attempting to restore missing files"
+                
+                # Try to restore each missing file
+                for file in "${missing_files[@]}"; do
+                    echo -e "${YELLOW}Restoring: $file${NC}"
+                    if git checkout HEAD -- "$file" 2>/dev/null; then
+                        echo -e "${GREEN}Successfully restored: $file${NC}"
+                        software_log "FILE_RESTORE" "Successfully restored: $file"
+                        
+                        # Make scripts executable
+                        if [[ "$file" == *.sh ]]; then
+                            chmod +x "$file" 2>/dev/null
+                        fi
+                    else
+                        echo -e "${RED}Failed to restore: $file${NC}"
+                        software_log "FILE_RESTORE" "Failed to restore: $file"
+                    fi
+                done
+                
+                echo -e "\n${GREEN}File restoration attempt completed!${NC}"
+            fi
+        fi
+    fi
 }
 
 # Function to check dependencies
