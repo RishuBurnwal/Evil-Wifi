@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Evil WiFi - Advanced WiFi Hotspot and Activity Logger
+# Version: 1.2.1
+# Last Updated: 2025-11-02
+# 
+# A security tool for creating WPA2-encrypted WiFi hotspots with advanced
+# network monitoring, traffic capture, and credential extraction capabilities.
+#
+# WARNING: This tool is for educational and authorized security testing only.
+# Unauthorized use to monitor or intercept network traffic is illegal.
+
 # Check if running as root, if not re-run with sudo
 if [ "$EUID" -ne 0 ]; then
     # Make sure the script is executable
@@ -644,6 +654,7 @@ verify_file_integrity() {
     
     local missing_files=()
     local corrupted_files=()
+    local modified_files=()
     
     # Check each required file
     for file in "${required_files[@]}"; do
@@ -658,7 +669,19 @@ verify_file_integrity() {
                     chmod +x "$file" 2>/dev/null || echo -e "${RED}Failed to make $file executable${NC}"
                 fi
             fi
-            echo -e "${GREEN}Verified: $file${NC}"
+            
+            # Check if file has been modified compared to remote version
+            if command -v git >/dev/null 2>&1; then
+                # Check if file differs from remote version
+                if ! git diff --quiet HEAD -- "$file" 2>/dev/null; then
+                    echo -e "${YELLOW}Modified file detected: $file${NC}"
+                    modified_files+=("$file")
+                else
+                    echo -e "${GREEN}Verified: $file${NC}"
+                fi
+            else
+                echo -e "${GREEN}Verified: $file${NC}"
+            fi
         fi
     done
     
@@ -699,7 +722,7 @@ verify_file_integrity() {
     done
     
     # Report results
-    if [ ${#missing_files[@]} -eq 0 ] && [ ${#corrupted_files[@]} -eq 0 ]; then
+    if [ ${#missing_files[@]} -eq 0 ] && [ ${#corrupted_files[@]} -eq 0 ] && [ ${#modified_files[@]} -eq 0 ]; then
         echo -e "\n${GREEN}All required files are present and verified!${NC}"
         software_log "FILE_VERIFY" "All required files are present and verified"
     else
@@ -711,6 +734,13 @@ verify_file_integrity() {
             done
         fi
         
+        if [ ${#modified_files[@]} -gt 0 ]; then
+            echo -e "${YELLOW}Modified files: ${#modified_files[@]}${NC}"
+            for file in "${modified_files[@]}"; do
+                echo -e "  - $file"
+            done
+        fi
+        
         if [ ${#corrupted_files[@]} -gt 0 ]; then
             echo -e "${RED}Corrupted files: ${#corrupted_files[@]}${NC}"
             for file in "${corrupted_files[@]}"; do
@@ -718,17 +748,17 @@ verify_file_integrity() {
             done
         fi
         
-        # Ask user if they want to attempt to restore missing files
-        if [ ${#missing_files[@]} -gt 0 ]; then
-            echo -e "\n${YELLOW}Do you want to attempt to restore missing files from GitHub? [y/N]${NC}"
+        # Ask user if they want to attempt to restore modified files
+        if [ ${#modified_files[@]} -gt 0 ] || [ ${#missing_files[@]} -gt 0 ]; then
+            echo -e "\n${YELLOW}Do you want to restore files to their original state? [y/N]${NC}"
             read -p "Select option: " restore_choice
             
             if [[ "$restore_choice" =~ ^[Yy]$ ]]; then
-                echo -e "\n${YELLOW}Attempting to restore missing files...${NC}"
-                software_log "FILE_RESTORE" "Attempting to restore missing files"
+                echo -e "\n${YELLOW}Restoring files to original state...${NC}"
+                software_log "FILE_RESTORE" "Restoring files to original state"
                 
-                # Try to restore each missing file
-                for file in "${missing_files[@]}"; do
+                # Try to restore each modified/missing file
+                for file in "${modified_files[@]}" "${missing_files[@]}"; do
                     echo -e "${YELLOW}Restoring: $file${NC}"
                     if git checkout HEAD -- "$file" 2>/dev/null; then
                         echo -e "${GREEN}Successfully restored: $file${NC}"
@@ -744,7 +774,7 @@ verify_file_integrity() {
                     fi
                 done
                 
-                echo -e "\n${GREEN}File restoration attempt completed!${NC}"
+                echo -e "\n${GREEN}File restoration completed!${NC}"
             fi
         fi
     fi
